@@ -5,6 +5,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useSpinner } from "../hooks/useSpinner";
 import { MessageTemplates } from "../util/MessageTemplates";
 
+import useLimitedRequests from "../util/useLimitedRequests";
+
+const hasQuota = useLimitedRequests(60000, 3)
+
 class GeminiVisionModel extends AiModel<string> {
     
     public constructor() {
@@ -13,6 +17,9 @@ class GeminiVisionModel extends AiModel<string> {
     }
     
     async sendMessage(prompt: string, msg: Message): Promise<any> {
+        
+        if(!hasQuota(msg.from)) return // quota exceed
+
         const media = await msg.downloadMedia();
         
         if(!media || !media.mimetype.endsWith("image/jpeg")) return;

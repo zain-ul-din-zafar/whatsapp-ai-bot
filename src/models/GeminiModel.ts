@@ -4,6 +4,9 @@ import { ENV } from "../lib/env";
 import { useSpinner } from "../hooks/useSpinner";
 import { MessageTemplates } from "../util/MessageTemplates";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import useLimitedRequests from "../util/useLimitedRequests";
+
+const hasQuota = useLimitedRequests(60000, 3)
 
 class GeminiModel extends AiModel<string> {
     public constructor() {
@@ -15,6 +18,8 @@ class GeminiModel extends AiModel<string> {
         const spinner = useSpinner(MessageTemplates.requestStr(this.aiModelName, msg.from, prompt));
         spinner.start();
 
+        if(!hasQuota(msg.from)) return // quota exceed
+        
         try {
             const startTime = Date.now();
 
