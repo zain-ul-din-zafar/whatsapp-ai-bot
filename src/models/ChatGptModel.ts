@@ -28,7 +28,7 @@ class ChatGptModel extends AiModel<string> {
         try {
             const startTime = Date.now();
             const aiRes = await this.client.sendMessage(prompt, this.history[msg.from]);
-
+            
             this.history[msg.from as keyof SendMessageOptions] = {
                 conversationId: aiRes.conversationId,
                 parentMessageId: aiRes.id

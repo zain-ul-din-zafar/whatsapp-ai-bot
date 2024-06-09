@@ -23,6 +23,9 @@ import { Util } from '../util/Util';
 import { useSpinner } from '../hooks/useSpinner';
 import { IModelConfig } from '../types/Config';
 import { GeminiVisionModel } from '../models/GeminiVisionModel';
+import EventEmitter from 'events';
+
+
 
 class WhatsAppClient {
     public constructor() {
@@ -47,6 +50,7 @@ class WhatsAppClient {
         this.aiModels.set('GeminiVision', new GeminiVisionModel());
         
         this.customModel = new CustomModel();
+        this.onClientStartAskingAIEvent = new EventEmitter();
     }
 
     public initializeClient() {
@@ -90,9 +94,12 @@ class WhatsAppClient {
                 modelToUse === undefined ||
                 this.aiModels.get(modelToUse)?.modelType !== "Image"
             ) return;
-
+            
             const model: IModelConfig = config.models[modelToUse] as IModelConfig;
             
+            this.onClientStartAskingAIEvent
+                .emit(WhatsAppClient.EVENTS_NAME.ON_START_ASKING_AI, message);
+
             this.aiModels
                 .get(modelToUse)
                 ?.sendMessage(msgStr.replace(model.prefix, ''), message);
@@ -109,6 +116,9 @@ class WhatsAppClient {
 
         if (modelToUse == undefined) return; // no models added
 
+        this.onClientStartAskingAIEvent
+            .emit(WhatsAppClient.EVENTS_NAME.ON_START_ASKING_AI, message);
+        
         // message with prefix
         if (this.aiModels.get(modelToUse)) {
             const model: IModelConfig = config.models[modelToUse] as IModelConfig;
@@ -147,6 +157,11 @@ class WhatsAppClient {
             }, message);
         }
     }
+
+    public onClientStartAskingAI(callback: (message: Message)=> void) {
+        this.onClientStartAskingAIEvent.on(WhatsAppClient.EVENTS_NAME.ON_START_ASKING_AI,callback);
+        return this;
+    }
     
     private client;
 
@@ -154,8 +169,12 @@ class WhatsAppClient {
     private aiModels: Map<AiModels, AiModel<string>>;
     private customModel: CustomModel;
 
-    // Helper functions
+    // events
+    private onClientStartAskingAIEvent: EventEmitter;
 
+    public static EVENTS_NAME = {
+        ON_START_ASKING_AI: 'start_asking_ai'
+    }
 }
 
 export { WhatsAppClient };
