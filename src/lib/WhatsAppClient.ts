@@ -24,6 +24,7 @@ import { useSpinner } from '../hooks/useSpinner';
 import { IModelConfig } from '../types/Config';
 import { GeminiVisionModel } from '../models/GeminiVisionModel';
 import EventEmitter from 'events';
+import { hasValidSubscription } from '../services/handleSubscriptions';
 
 
 
@@ -84,9 +85,12 @@ class WhatsAppClient {
 
 
         if (msgStr.length == 0) return;
+
+        // check subscriptions
+        if(!hasValidSubscription({ sender: message.from })) return;
         
         const modelToUse = Util.getModelByPrefix(msgStr) as AiModels;
-
+        
         // media
         if(message.hasMedia) {
             
